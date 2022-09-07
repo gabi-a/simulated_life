@@ -27,7 +27,7 @@ struct MyWindowHandler {
 
 const WINDOW_X: u32 = 2000;
 const WINDOW_Y: u32 = 1500;
-const N_PARTICLES: u32 = 5000;
+const N_PARTICLES: u32 = 1000;
 const RADIUS: f32 = 5.0;
 
 impl WindowHandler for MyWindowHandler {
@@ -36,34 +36,41 @@ impl WindowHandler for MyWindowHandler {
         //     Ok(timer) => timer.secs_elapsed() as f32 * 100.0,
         //     Err(_) => 0.0,
         // };
-        let dt = 0.5;
+        let dt = 2.0;
         
         let y = self.yellow.clone();
         let r = self.red.clone();
         let g = self.green.clone();
 
-        apply_rule(&mut self.red, &r, -0.1, dt);
-        apply_rule(&mut self.red, &g, -0.34, dt);
-        apply_rule(&mut self.red, &y, 0.0, dt);
+        update_velocities(&mut self.red, &r, 0.5, dt);
+        update_velocities(&mut self.red, &g, -0.34, dt);
+        update_velocities(&mut self.red, &y, 0.0, dt);
 
-        apply_rule(&mut self.green, &r, -0.17, dt);
-        apply_rule(&mut self.green, &g, -0.32, dt);
-        apply_rule(&mut self.green, &y, 0.34, dt);
+        update_velocities(&mut self.green, &r, -0.17, dt);
+        update_velocities(&mut self.green, &g, -0.32, dt);
+        update_velocities(&mut self.green, &y, 0.34, dt);
 
-        apply_rule(&mut self.yellow, &g, -0.2, dt);
-        apply_rule(&mut self.yellow, &r, 0.0, dt);
-        apply_rule(&mut self.yellow, &y, 0.15, dt);
+        update_velocities(&mut self.yellow, &g, -0.2, dt);
+        update_velocities(&mut self.yellow, &r, 0.0, dt);
+        update_velocities(&mut self.yellow, &y, 0.15, dt);
+
+        update_positions(&mut self.red, dt);
+        update_positions(&mut self.yellow, dt);
+        update_positions(&mut self.green, dt);
 
         graphics.clear_screen(Color::from_rgb(0.09, 0.0, 0.09));
 
         for particle in &self.green {
-            graphics.draw_circle(speedyVec2{x: particle.pos.x, y: particle.pos.y}, RADIUS, Color::GREEN)
+            graphics.draw_circle(speedyVec2{x: particle.pos.x, y: particle.pos.y}, 1.2*RADIUS, Color::BLACK);
+            graphics.draw_circle(speedyVec2{x: particle.pos.x, y: particle.pos.y}, RADIUS, Color::GREEN);
         }
         for particle in &self.red {
-            graphics.draw_circle(speedyVec2{x: particle.pos.x, y: particle.pos.y}, RADIUS, Color::RED)
+            graphics.draw_circle(speedyVec2{x: particle.pos.x, y: particle.pos.y}, 1.2*RADIUS, Color::BLACK);
+            graphics.draw_circle(speedyVec2{x: particle.pos.x, y: particle.pos.y}, RADIUS, Color::RED);
         }
         for particle in &self.yellow {
-            graphics.draw_circle(speedyVec2{x: particle.pos.x, y: particle.pos.y}, RADIUS, Color::YELLOW)
+            graphics.draw_circle(speedyVec2{x: particle.pos.x, y: particle.pos.y}, 1.2*RADIUS, Color::BLACK);
+            graphics.draw_circle(speedyVec2{x: particle.pos.x, y: particle.pos.y}, RADIUS, Color::YELLOW);
         }
         // Request that we draw another frame once this one has finished
         helper.request_redraw();
@@ -158,42 +165,32 @@ impl Particle {
 }
 
 use rayon::prelude::*;
-fn apply_rule(particles1: &mut Vec<Particle>, particles2: &Vec<Particle>, g: f32, dt: f32) {
+fn update_velocities(particles1: &mut Vec<Particle>, particles2: &Vec<Particle>, g: f32, dt: f32) {
     particles1.par_iter_mut().map(
         |a| {
             let mut force: Vector2 = Vector2::zero();
             for b in particles2 {
                 let df = a.pos - b.pos;
                 let d = (df * df).sqrt();
-                if d > RADIUS*2.0 && d < 80.0 {
-                    force = force + df.scale(g / d);
-                    //force = force + df.scale(-1.0 / d);
-                } else if 0.0 < d && d <= RADIUS*2.0 {
-                    force = force + df.scale(2.0 / d.powi(2));
+                if d > RADIUS*2.0 && d < 100.0 {
+                    force = force + df.scale(g / d.powf(1.5));
+                    // force = force + df.scale(-0.010 / d);
+                } else if RADIUS < d && d <= RADIUS*2.0 {
+                    force = force + df.scale(10.0 / f32::max(100.0, (d-RADIUS).powi(2)));
+                } else if 0.0 < d && d <= RADIUS {
+                    force = force + df.scale(1.0 / f32::max(100.0, d.powi(2)));
                 }
             };
-            a.vel = a.vel.scale(0.5) + force.scale(dt);
-            a.pos = a.pos + a.vel.scale(dt);
-            if a.pos.x <= 0.0 || a.pos.x >= WINDOW_X as f32 {a.vel.x *= -1.0}
-            if a.pos.y <= 0.0 || a.pos.y >= WINDOW_Y as f32 {a.vel.y *= -1.0}
+            a.vel = a.vel + force.scale(dt);
         }
     ).collect::<()>();
-    
-    // for i in 0..particles1.len() {
-    //     let mut force: Vector2 = Vector2 { x: 0.0, y: 0.0 };
-    //     if let Some(a) = particles1.get_mut(i) {
-    //     for j in 0..particles2.len() {
-    //         if let Some(b) = particles2.get(j) {
-    //             let df = a.pos - b.pos;
-    //             let d = (df * df).sqrt();
-    //             if d > 0.0 && d < 80.0 {
-    //                 force = force + df.scale(g / d);
-    //             }
-    //         };};
-    //     a.vel = (a.vel + force).scale(0.5);
-    //     a.pos = a.pos + a.vel;
-    //     if a.pos.x <= 0.0 || a.pos.x >= WINDOW_X as f32 {a.vel.x *= -1.0}
-    //     if a.pos.y <= 0.0 || a.pos.y >= WINDOW_Y as f32 {a.vel.y *= -1.0}
-    //     };
-    // }
+}
+
+fn update_positions(particles1: &mut Vec<Particle>, dt: f32) {
+    particles1.par_iter_mut().map(|a| {
+        if a.pos.x <= 0.0 || a.pos.x >= WINDOW_X as f32 {a.vel.x *= -1.0}
+        if a.pos.y <= 0.0 || a.pos.y >= WINDOW_Y as f32 {a.vel.y *= -1.0}
+        a.vel = a.vel.scale(0.5);
+        a.pos = a.pos + a.vel.scale(dt);
+    }).collect::<()>();
 }
