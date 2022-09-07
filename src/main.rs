@@ -1,4 +1,5 @@
-// See: https://particle-life.com/about
+// Based on: https://github.com/hunar4321/particle-life
+// See also: https://particle-life.com/about
 // Author: Gabriel Abrahams
 // Date: 7 September 2022
 
