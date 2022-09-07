@@ -37,17 +37,22 @@ impl WindowHandler for MyWindowHandler {
         //     Err(_) => 0.0,
         // };
         let dt = 0.5;
+        
         let y = self.yellow.clone();
         let r = self.red.clone();
         let g = self.green.clone();
 
-        apply_rule(&mut self.green, &g, -0.32, dt);
-        apply_rule(&mut self.green, &r, -0.17, dt);
-        apply_rule(&mut self.green, &y, 0.34, dt);
         apply_rule(&mut self.red, &r, -0.1, dt);
         apply_rule(&mut self.red, &g, -0.34, dt);
-        apply_rule(&mut self.yellow, &y, 0.15, dt);
+        apply_rule(&mut self.red, &y, 0.0, dt);
+
+        apply_rule(&mut self.green, &r, -0.17, dt);
+        apply_rule(&mut self.green, &g, -0.32, dt);
+        apply_rule(&mut self.green, &y, 0.34, dt);
+
         apply_rule(&mut self.yellow, &g, -0.2, dt);
+        apply_rule(&mut self.yellow, &r, 0.0, dt);
+        apply_rule(&mut self.yellow, &y, 0.15, dt);
 
         graphics.clear_screen(Color::from_rgb(0.09, 0.0, 0.09));
 
@@ -160,13 +165,14 @@ fn apply_rule(particles1: &mut Vec<Particle>, particles2: &Vec<Particle>, g: f32
             for b in particles2 {
                 let df = a.pos - b.pos;
                 let d = (df * df).sqrt();
-                if d > RADIUS*1.5 && d < 80.0 {
+                if d > RADIUS*2.0 && d < 80.0 {
                     force = force + df.scale(g / d);
-                } else if 0.0 < d && d <= RADIUS*1.5 {
-                    force = force + df.scale(10.0 / d.powi(2));
+                    //force = force + df.scale(-1.0 / d);
+                } else if 0.0 < d && d <= RADIUS*2.0 {
+                    force = force + df.scale(2.0 / d.powi(2));
                 }
             };
-            a.vel = (a.vel + force.scale(dt)).scale(0.5);
+            a.vel = a.vel.scale(0.5) + force.scale(dt);
             a.pos = a.pos + a.vel.scale(dt);
             if a.pos.x <= 0.0 || a.pos.x >= WINDOW_X as f32 {a.vel.x *= -1.0}
             if a.pos.y <= 0.0 || a.pos.y >= WINDOW_Y as f32 {a.vel.y *= -1.0}
