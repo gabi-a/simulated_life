@@ -26,7 +26,7 @@ struct MyWindowHandler {
 
 const WINDOW_X: u32 = 2000;
 const WINDOW_Y: u32 = 1500;
-const N_PARTICLES: u32 = 1000;
+const N_PARTICLES: u32 = 5000;
 const RADIUS: f32 = 5.0;
 
 impl WindowHandler for MyWindowHandler {
@@ -35,7 +35,7 @@ impl WindowHandler for MyWindowHandler {
         //     Ok(timer) => timer.secs_elapsed() as f32 * 100.0,
         //     Err(_) => 0.0,
         // };
-        let dt = 1.0;
+        let dt = 0.5;
         let y = self.yellow.clone();
         let r = self.red.clone();
         let g = self.green.clone();
