@@ -170,7 +170,6 @@ fn apply_rule(particles1: &mut Vec<Particle>, particles2: &Vec<Particle>, g: f32
             a.pos = a.pos + a.vel.scale(dt);
             if a.pos.x <= 0.0 || a.pos.x >= WINDOW_X as f32 {a.vel.x *= -1.0}
             if a.pos.y <= 0.0 || a.pos.y >= WINDOW_Y as f32 {a.vel.y *= -1.0}
-            ()
         }
     ).collect::<()>();
     
